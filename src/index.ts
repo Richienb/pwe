@@ -29,11 +29,15 @@ interface Window extends ServiceWorkerGlobalScope { }
 // Skip installation waiting
 self.addEventListener('install', () => (self as ServiceWorkerGlobalScope).skipWaiting());
 
-// Catch fetch requests
-self.addEventListener('fetch', e => {
-    // Force store new cache
-    caches.open('cache').then(cache => cache.add(e.request.url));
-
-    // Respond from network with cache as backup
-    e.respondWith(fetch(e.request).catch(() => caches.match(e.request)));
-});
+// When fetch initiated
+self.addEventListener('fetch', (e: any) => e.respondWith(
+    // Fetch the content of the URL
+    fetch(e.request)
+        // If succeeded store in cache then respond
+        .then(res => {
+            caches.open("cache").then(cache => cache.put(e.request.url, res))
+            return res
+        })
+        // If failed respond from cache
+        .catch(() => caches.match(e.request))
+));
